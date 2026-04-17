@@ -1,0 +1,20 @@
+{
+  "name": "stse",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.15.0"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0",
+    "jest-html-reporter": "^4.4.0"
+  }
+}
