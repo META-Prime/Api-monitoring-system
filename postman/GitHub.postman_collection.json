@@ -1,0 +1,153 @@
+{
+  "info": {
+    "name": "GitHub API (STSE)",
+    "description": "Functional, negative, performance, and rate-limit checks for https://api.github.com",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://api.github.com" },
+    { "key": "username", "value": "octocat" }
+  ],
+  "item": [
+    {
+      "name": "Functional",
+      "item": [
+        {
+          "name": "Get user profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const u = pm.response.json();",
+                  "pm.test('User fields exist', () => {",
+                  "  pm.expect(u.login).to.eql(pm.collectionVariables.get('username'));",
+                  "  pm.expect(u).to.have.property('id');",
+                  "  pm.expect(u).to.have.property('repos_url');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "User-Agent", "value": "stse-postman" }
+            ],
+            "url": "{{baseUrl}}/users/{{username}}"
+          }
+        },
+        {
+          "name": "Get user repositories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const repos = pm.response.json();",
+                  "pm.test('Repos is an array', () => pm.expect(repos).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "User-Agent", "value": "stse-postman" }
+            ],
+            "url": "{{baseUrl}}/users/{{username}}/repos"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Negative",
+      "item": [
+        {
+          "name": "Invalid user returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "User-Agent", "value": "stse-postman" }
+            ],
+            "url": "{{baseUrl}}/users/thisuserdoesnotexist123456"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Performance",
+      "item": [
+        {
+          "name": "User response under 1000ms",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "User-Agent", "value": "stse-postman" }
+            ],
+            "url": "{{baseUrl}}/users/{{username}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rate Limiting",
+      "item": [
+        {
+          "name": "Rate limit headers exist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Rate limit headers present', () => {",
+                  "  pm.expect(pm.response.headers.get('x-ratelimit-limit')).to.exist;",
+                  "  pm.expect(pm.response.headers.get('x-ratelimit-remaining')).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "User-Agent", "value": "stse-postman" }
+            ],
+            "url": "{{baseUrl}}/users/{{username}}"
+          }
+        }
+      ]
+    }
+  ]
+}
