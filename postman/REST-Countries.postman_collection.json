@@ -1,0 +1,181 @@
+{
+  "info": {
+    "name": "REST Countries API (STSE)",
+    "description": "Functional, negative, performance, and reliability checks for https://restcountries.com",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://restcountries.com/v3.1" }
+  ],
+  "item": [
+    {
+      "name": "Functional",
+      "item": [
+        {
+          "name": "Get all countries",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Non-empty array', () => {",
+                  "  pm.expect(json).to.be.an('array');",
+                  "  pm.expect(json.length).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/all?fields=name,cca2,population,region,capital"
+          }
+        },
+        {
+          "name": "Get Ethiopia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const [c] = pm.response.json();",
+                  "pm.test('Name contains Ethiopia', () => {",
+                  "  pm.expect(c.name.common.toLowerCase()).to.include('ethiopia');",
+                  "});",
+                  "pm.test('Has population, region, capital', () => {",
+                  "  pm.expect(c).to.have.property('population');",
+                  "  pm.expect(c.region).to.be.a('string');",
+                  "  pm.expect(c.capital).to.be.an('array').that.is.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/name/ethiopia"
+          }
+        },
+        {
+          "name": "Filter fields (name, capital)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const [c] = pm.response.json();",
+                  "pm.test('Only name and capital', () => {",
+                  "  pm.expect(c).to.have.keys('name', 'capital');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/name/ethiopia?fields=name,capital"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Negative",
+      "item": [
+        {
+          "name": "Invalid country — expect 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "const j = pm.response.json();",
+                  "pm.test('Error body', () => pm.expect(j.status).to.eql(404));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/name/thiscountrydoesnotexist999"
+          }
+        },
+        {
+          "name": "Empty name path — expect 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/name/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Performance",
+      "item": [
+        {
+          "name": "All — response time under 1000ms",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 1000ms', () => {",
+                  "  pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/all?fields=name,cca2,population,region,capital"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reliability",
+      "item": [
+        {
+          "name": "Run Collection Runner (manual)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/all?fields=name,cca2,population,region,capital"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
