@@ -4,6 +4,7 @@ const client = require("prom-client");
 
 const app = express();
 const register = new client.Registry();
+require("dotenv").config();
 client.collectDefaultMetrics({ register });
 
 const CHECK_INTERVAL_MS = Number(process.env.CHECK_INTERVAL_MS || 30000);
@@ -54,7 +55,7 @@ register.registerMetric(githubRateLimit);
 register.registerMetric(githubRateRemaining);
 register.registerMetric(githubRateResetUnix);
 
-// Initialize labeled series so they always appear in /metrics output.
+
 githubRateLimit.labels("core").set(0);
 githubRateRemaining.labels("core").set(0);
 githubRateResetUnix.labels("core").set(0);
