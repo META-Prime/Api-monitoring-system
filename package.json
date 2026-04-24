@@ -6,6 +6,7 @@
   "scripts": {
     "test": "jest",
     "test:all": "jest",
+    "test:api": "jest tests/api.test.js",
     "test:rest": "jest tests/restCountries.test.js",
     "test:github": "jest tests/github.test.js",
     "monitor": "node monitoring/monitor.js"

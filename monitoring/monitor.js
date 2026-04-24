@@ -10,6 +10,8 @@ client.collectDefaultMetrics({ register });
 const CHECK_INTERVAL_MS = Number(process.env.CHECK_INTERVAL_MS || 30000);
 const PORT = Number(process.env.MONITOR_PORT || 4000);
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const OPENWEATHER_KEY =
+  process.env.OPENWEATHER_KEY || process.env.openweather_key;
 
 const requestDuration = new client.Histogram({
   name: "external_api_request_duration_ms",
@@ -109,10 +111,45 @@ async function probe(api, endpoint, url, expectedStatus) {
 }
 
 async function runChecks() {
-  await Promise.all([
+  const checks = [
     probe("github", "user_octocat", "https://api.github.com/users/octocat", 200),
-    probe("restcountries", "country_ethiopia", "https://restcountries.com/v3.1/name/ethiopia", 200),
-  ]);
+    probe(
+      "restcountries",
+      "country_ethiopia",
+      "https://restcountries.com/v3.1/name/ethiopia",
+      200
+    ),
+    probe(
+      "binance",
+      "server_time",
+      "https://api.binance.com/api/v3/time",
+      200
+    ),
+    probe(
+      "binance",
+      "current_avg_price_btcusdt",
+      "https://api.binance.com/api/v3/avgPrice?symbol=BTCUSDT",
+      200
+    ),
+  ];
+
+  if (OPENWEATHER_KEY) {
+    checks.push(
+      probe(
+        "openweather",
+        "current_weather_london",
+        `https://api.openweathermap.org/data/2.5/weather?q=London&appid=${OPENWEATHER_KEY}`,
+        200
+      )
+    );
+  } else {
+    requestStatus.labels("openweather", "current_weather_london").set(0);
+    requestFailures
+      .labels("openweather", "current_weather_london", "missing_api_key")
+      .inc();
+  }
+
+  await Promise.all(checks);
 }
 
 app.get("/health", (_req, res) => {

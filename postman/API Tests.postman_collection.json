@@ -1,0 +1,174 @@
+{
+  "info": {
+    "_postman_id": "0c80e002-c1e1-4901-9981-12da40468dd0",
+    "name": "API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46713724"
+  },
+  "item": [
+    {
+      "name": "Open Weather",
+      "item": [
+        {
+          "name": "Current Weather",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "5 Day Forcast",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "Air Pollution",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "Geocoding Search",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "Error Handling",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Security Check: Unauthorized with bad key\", () => {\r",
+                  "    pm.response.to.have.status(401);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ow_base_url}}/data/2.5/weather?q=London&appid=EXPIRED_KEY",
+              "host": [
+                "{{ow_base_url}}"
+              ],
+              "path": [
+                "data",
+                "2.5",
+                "weather"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "London"
+                },
+                {
+                  "key": "appid",
+                  "value": "EXPIRED_KEY"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Binance",
+      "item": [
+        {
+          "name": "Current Avg Price",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "Exchange Info",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "Ticker",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "Server Time",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "Ping",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "openweather_key",
+      "value": ""
+    },
+    {
+      "key": "binance_base_url",
+      "value": ""
+    },
+    {
+      "key": "ow_base_url",
+      "value": ""
+    }
+  ]
+}
