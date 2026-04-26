@@ -7,23 +7,9 @@
 - Run REST Countries tests only: `npm run test:rest`
 - Run monitoring server: `npm run monitor`
 
-## Important for GitHub API (headers + token)
 
-GitHub may return `403` if requests are unauthenticated and rate limit is exceeded.
-Set a token before running heavy tests/monitoring.
 
-PowerShell:
 
-```powershell
-$env:GITHUB_TOKEN="your_github_personal_access_token"
-```
-
-The project now sends these headers for GitHub requests:
-
-- `User-Agent`
-- `Accept: application/vnd.github+json`
-- `X-GitHub-Api-Version: 2022-11-28`
-- `Authorization: Bearer <token>` (only if `GITHUB_TOKEN` is set)
 
 ## Monitoring endpoints
 
