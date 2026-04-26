@@ -1,0 +1,400 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "external_api_up",
+          "legendFormat": "{{api}}/{{endpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "1) Availability by Endpoint",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 2,
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by (le, api, endpoint) (rate(external_api_request_duration_ms_bucket[5m])))",
+          "legendFormat": "{{api}}/{{endpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "2) P95 Latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 3,
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum by (le, api, endpoint) (rate(external_api_request_duration_ms_bucket[5m])))",
+          "legendFormat": "{{api}}/{{endpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "3) P99 Latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 6
+      },
+      "id": 4,
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum by (api, endpoint) (rate(external_api_failures_total[5m]))",
+          "legendFormat": "{{api}}/{{endpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "4) Failure Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 6
+      },
+      "id": 5,
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum by (api, endpoint) (rate(external_api_success_total[5m]))",
+          "legendFormat": "{{api}}/{{endpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "5) Success Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 6
+      },
+      "id": 6,
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum by (api, endpoint, result) (rate(external_api_requests_total[5m]))",
+          "legendFormat": "{{api}}/{{endpoint}} {{result}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "6) Throughput (Success/Failure)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 12
+      },
+      "id": 7,
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "external_api_last_status_code",
+          "legendFormat": "{{api}}/{{endpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "7) Last HTTP Status Code",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 12
+      },
+      "id": 8,
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "time() - external_api_last_success_unix",
+          "legendFormat": "{{api}}/{{endpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "8) Time Since Last Success",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 12
+      },
+      "id": 9,
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "time() - external_api_last_check_unix",
+          "legendFormat": "{{api}}/{{endpoint}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "9) Time Since Last Check",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 18
+      },
+      "id": 10,
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "external_api_check_runs_total",
+          "legendFormat": "runs",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "10) Monitor Check Runs",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 18
+      },
+      "id": 11,
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "github_rate_remaining{resource=\"core\"}",
+          "legendFormat": "core remaining",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "11) GitHub Rate Remaining",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 18
+      },
+      "id": 12,
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum by (api, endpoint, reason) (increase(external_api_failures_total{reason=~\"network_.*\"}[15m]))",
+          "legendFormat": "{{api}}/{{endpoint}} {{reason}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "12) Top Network Errors",
+      "type": "barchart"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "stse",
+    "api-monitoring",
+    "prometheus"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "STSE API Monitoring (12 Panels)",
+  "uid": "stse-api-monitoring-12",
+  "version": 1,
+  "weekStart": ""
+}

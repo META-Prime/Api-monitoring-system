@@ -32,6 +32,47 @@ const requestFailures = new client.Counter({
   labelNames: ["api", "endpoint", "reason"],
 });
 
+const requestSuccesses = new client.Counter({
+  name: "external_api_success_total",
+  help: "Total successful requests to external APIs",
+  labelNames: ["api", "endpoint"],
+});
+
+const requestTotal = new client.Counter({
+  name: "external_api_requests_total",
+  help: "Total requests to external APIs grouped by result",
+  labelNames: ["api", "endpoint", "result"],
+});
+
+const lastCheckUnix = new client.Gauge({
+  name: "external_api_last_check_unix",
+  help: "Last check time in unix seconds",
+  labelNames: ["api", "endpoint"],
+});
+
+const lastSuccessUnix = new client.Gauge({
+  name: "external_api_last_success_unix",
+  help: "Last successful check time in unix seconds",
+  labelNames: ["api", "endpoint"],
+});
+
+const lastStatusCode = new client.Gauge({
+  name: "external_api_last_status_code",
+  help: "Most recent HTTP status code for each endpoint",
+  labelNames: ["api", "endpoint"],
+});
+
+const runChecksTotal = new client.Counter({
+  name: "external_api_check_runs_total",
+  help: "Total monitoring cycles executed",
+});
+
+const requestNetworkErrors = new client.Counter({
+  name: "external_api_network_errors_total",
+  help: "Total network errors by error code",
+  labelNames: ["api", "endpoint", "error_code"],
+});
+
 const githubRateLimit = new client.Gauge({
   name: "github_rate_limit",
   help: "GitHub API rate limit",
@@ -53,6 +94,13 @@ const githubRateResetUnix = new client.Gauge({
 register.registerMetric(requestDuration);
 register.registerMetric(requestStatus);
 register.registerMetric(requestFailures);
+register.registerMetric(requestSuccesses);
+register.registerMetric(requestTotal);
+register.registerMetric(lastCheckUnix);
+register.registerMetric(lastSuccessUnix);
+register.registerMetric(lastStatusCode);
+register.registerMetric(runChecksTotal);
+register.registerMetric(requestNetworkErrors);
 register.registerMetric(githubRateLimit);
 register.registerMetric(githubRateRemaining);
 register.registerMetric(githubRateResetUnix);
@@ -71,8 +119,17 @@ function githubRequestHeaders() {
   };
 }
 
+function getErrorCode(error) {
+  if (typeof error?.code === "string" && error.code.trim()) {
+    return error.code;
+  }
+  return "UNKNOWN";
+}
+
 async function probe(api, endpoint, url, expectedStatus) {
   const start = Date.now();
+  const nowUnix = Math.floor(start / 1000);
+  lastCheckUnix.labels(api, endpoint).set(nowUnix);
   try {
     const res = await axios.get(url, {
       timeout: 10000,
@@ -88,10 +145,15 @@ async function probe(api, endpoint, url, expectedStatus) {
 
     if (res.status === expectedStatus) {
       requestStatus.labels(api, endpoint).set(1);
+      requestSuccesses.labels(api, endpoint).inc();
+      requestTotal.labels(api, endpoint, "success").inc();
+      lastSuccessUnix.labels(api, endpoint).set(nowUnix);
     } else {
       requestStatus.labels(api, endpoint).set(0);
       requestFailures.labels(api, endpoint, `status_${res.status}`).inc();
+      requestTotal.labels(api, endpoint, "failure").inc();
     }
+    lastStatusCode.labels(api, endpoint).set(res.status);
 
     if (api === "github") {
       const limit = Number(res.headers["x-ratelimit-limit"]);
@@ -104,13 +166,59 @@ async function probe(api, endpoint, url, expectedStatus) {
     }
   } catch (error) {
     const elapsed = Date.now() - start;
+    const errorCode = getErrorCode(error);
     requestDuration.labels(api, endpoint).observe(elapsed);
     requestStatus.labels(api, endpoint).set(0);
-    requestFailures.labels(api, endpoint, "network_or_timeout").inc();
+    requestFailures.labels(api, endpoint, `network_${errorCode}`).inc();
+    requestNetworkErrors.labels(api, endpoint, errorCode).inc();
+    requestTotal.labels(api, endpoint, "failure").inc();
+    lastStatusCode.labels(api, endpoint).set(0);
   }
 }
 
+async function probeWithFallback(api, endpoint, urls, expectedStatus) {
+  for (const url of urls) {
+    const start = Date.now();
+    const nowUnix = Math.floor(start / 1000);
+    lastCheckUnix.labels(api, endpoint).set(nowUnix);
+    try {
+      const res = await axios.get(url, {
+        timeout: 10000,
+        validateStatus: () => true,
+        headers: { "User-Agent": "stse-monitor/1.0" },
+      });
+
+      const elapsed = Date.now() - start;
+      requestDuration.labels(api, endpoint).observe(elapsed);
+      lastStatusCode.labels(api, endpoint).set(res.status);
+
+      if (res.status === expectedStatus) {
+        requestStatus.labels(api, endpoint).set(1);
+        requestSuccesses.labels(api, endpoint).inc();
+        requestTotal.labels(api, endpoint, "success").inc();
+        lastSuccessUnix.labels(api, endpoint).set(nowUnix);
+        return;
+      }
+
+      requestFailures.labels(api, endpoint, `status_${res.status}`).inc();
+      requestTotal.labels(api, endpoint, "failure").inc();
+    } catch (error) {
+      const elapsed = Date.now() - start;
+      const errorCode = getErrorCode(error);
+      requestDuration.labels(api, endpoint).observe(elapsed);
+      requestFailures.labels(api, endpoint, `network_${errorCode}`).inc();
+      requestNetworkErrors.labels(api, endpoint, errorCode).inc();
+      requestTotal.labels(api, endpoint, "failure").inc();
+      lastStatusCode.labels(api, endpoint).set(0);
+    }
+  }
+
+  requestStatus.labels(api, endpoint).set(0);
+}
+
 async function runChecks() {
+  runChecksTotal.inc();
+
   const checks = [
     probe("github", "user_octocat", "https://api.github.com/users/octocat", 200),
     probe(
@@ -119,16 +227,28 @@ async function runChecks() {
       "https://restcountries.com/v3.1/name/ethiopia",
       200
     ),
-    probe(
+    probeWithFallback(
       "binance",
       "server_time",
-      "https://api.binance.com/api/v3/time",
+      [
+        "https://api.binance.com/api/v3/time",
+        "https://api.binance.us/api/v3/time",
+      ],
       200
     ),
-    probe(
+    probeWithFallback(
       "binance",
       "current_avg_price_btcusdt",
-      "https://api.binance.com/api/v3/avgPrice?symbol=BTCUSDT",
+      [
+        "https://api.binance.com/api/v3/avgPrice?symbol=BTCUSDT",
+        "https://api.binance.us/api/v3/avgPrice?symbol=BTCUSDT",
+      ],
+      200
+    ),
+    probeWithFallback(
+      "binance",
+      "ping",
+      ["https://api.binance.com/api/v3/ping", "https://api.binance.us/api/v3/ping"],
       200
     ),
   ];
